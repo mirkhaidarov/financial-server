@@ -59,14 +59,16 @@ export class ExchangeRateService {
   }: GetConvertedAmountArgs) {
     try {
       let defaultCurrency: DefaultCurrency | null = null
+      const lowerFrom = from?.toLowerCase()
+      const lowerTo = to.toLowerCase()
 
-      if (!from) {
+      if (!lowerFrom) {
         defaultCurrency = await this.defaultCurrencyRepository.findOne({ where: {} })
       }
 
-      const rate = await this.getRate({ from: defaultCurrency?.name || from, to })
+      const rate = await this.getRate({ from: defaultCurrency?.name || lowerFrom, to: lowerTo })
 
-      return this.convertAmount({ rate, to, amount, digits })
+      return this.convertAmount({ rate, to: lowerTo, amount, digits })
     } catch (error: unknown) {
       console.error(
         `Error in ExchangeRateService inside getConvertedAmount method.

@@ -34,7 +34,7 @@ export class ExchangeRateController {
     name: 'digits',
     type: Number,
     required: false,
-    example: '2000.11',
+    example: 2,
     description: `Set how much digits should have the converted amount`,
   })
   toGetAmount(
@@ -44,8 +44,8 @@ export class ExchangeRateController {
     @Query('digits') digits?: number,
   ) {
     return this.exchangeRateService.getConvertedAmount({
-      from: from?.toLowerCase(),
-      to: to?.toLowerCase(),
+      from,
+      to,
       amount,
       digits,
     })
