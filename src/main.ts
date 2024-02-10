@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core'
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify'
+import { FastifyAdapter } from '@nestjs/platform-fastify'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { setupSecurity } from '@core/config/setup-security'
 import { setupSwagger } from '@core/config/setup-swagger'
 import { AppModule } from './app.module'
