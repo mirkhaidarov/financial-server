@@ -1,4 +1,4 @@
-export const SWAGGER_PATH = 'swagger'
+export const SWAGGER_PATH = 'api'
 
 export const SWAGGER_TITLE = 'financial server'
 

@@ -1,4 +1,4 @@
-export type FinancialRecordInterface = {
+export interface FinancialRecordInterface {
   readonly id: number
   readonly created_at: Date
   readonly updated_at: Date
