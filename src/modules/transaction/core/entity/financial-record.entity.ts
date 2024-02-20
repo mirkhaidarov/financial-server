@@ -1,7 +1,8 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm'
+import { Entity, Column, PrimaryColumn, ManyToOne, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transaction } from './transaction.entity'
 import type { FinancialRecordInterface } from '../interface'
+import { Country } from '@modules/country/core/entity'
 
 @Entity()
 export class FinancialRecord implements FinancialRecordInterface {
@@ -10,10 +11,10 @@ export class FinancialRecord implements FinancialRecordInterface {
   id: number
 
   @CreateDateColumn({ type: 'timestamp', nullable: false })
-  created_at: Date
+  createdAt: Date
 
   @UpdateDateColumn({ type: 'timestamp', nullable: false })
-  updated_at: Date
+  updatedAt: Date
 
   @ApiProperty({
     nullable: false,
@@ -31,4 +32,7 @@ export class FinancialRecord implements FinancialRecordInterface {
 
   @ManyToOne(() => Transaction, ({ financialRecords }) => financialRecords)
   transaction: Transaction
+
+  @OneToMany(() => Country, ({ financialRecord }) => financialRecord)
+  countries: Country[]
 }

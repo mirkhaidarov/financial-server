@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm'
+import { Entity, Column, PrimaryColumn, ManyToOne } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import type { CountryInterface } from '../interface'
+import { FinancialRecord } from '@modules/transaction/core/entity'
 
 @Entity()
 export class Country implements CountryInterface {
@@ -21,4 +22,7 @@ export class Country implements CountryInterface {
   })
   @Column({ type: 'varchar', nullable: true })
   city?: string
+
+  @ManyToOne(() => FinancialRecord, ({ countries }) => countries)
+  financialRecord: FinancialRecord
 }
