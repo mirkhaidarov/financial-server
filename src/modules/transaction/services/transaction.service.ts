@@ -29,7 +29,9 @@ export class TransactionService {
     return this.transactionRepository.find({
       where: { name, type: transactionType, financialRecords: { recordTitle } },
       relations: {
-        financialRecords: true,
+        financialRecords: {
+          countries: true,
+        },
       },
       order: {
         name: 'ASC',
@@ -52,7 +54,7 @@ export class TransactionService {
 
       await this.financialRecordRepository.update(recordId, {
         amount: getAmount({ amount: convertedAmount, recordAmount }),
-        updated_at: new Date(),
+        updatedAt: new Date(),
       })
 
       return {
