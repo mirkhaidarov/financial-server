@@ -1,6 +1,5 @@
-import { Controller, Get, Post, Query, Body } from '@nestjs/common'
+import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger'
-import { SetDefaultCurrencyDto } from '../core/dto'
 import { ExchangeRateService } from '../services'
 
 @ApiTags('Exchange Rate Controller')
@@ -49,17 +48,5 @@ export class ExchangeRateController {
       amount,
       digits,
     })
-  }
-
-  @Post()
-  @ApiOperation({ summary: 'Set default currency' })
-  @ApiQuery({
-    name: 'name',
-    type: String,
-    required: false,
-    example: 'USD',
-  })
-  toSetDefaultCurrency(@Body() body: SetDefaultCurrencyDto) {
-    return this.exchangeRateService.setDefaultCurrency({ name: body.name.toLowerCase() })
   }
 }
