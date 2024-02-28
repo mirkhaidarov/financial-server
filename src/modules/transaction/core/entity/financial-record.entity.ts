@@ -8,7 +8,7 @@ import { Country } from '@modules/country/core/entity'
 export class FinancialRecord implements FinancialRecordInterface {
   @ApiProperty({ nullable: false })
   @PrimaryColumn({ type: 'uuid' })
-  id: number
+  id: string
 
   @CreateDateColumn({ type: 'timestamp', nullable: false })
   createdAt: Date
