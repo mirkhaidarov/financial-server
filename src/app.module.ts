@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@infra/typeorm'
 import { ExchangeRateModule } from '@infra/exchange-rate'
 import { TransactionModule } from '@modules/transaction'
 import { CountryModule } from '@modules/country'
+import { CurrencyModule } from '@modules/currency'
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CountryModule } from '@modules/country'
     ExchangeRateModule,
     TransactionModule,
     CountryModule,
+    CurrencyModule,
   ],
 })
 export class AppModule {}
