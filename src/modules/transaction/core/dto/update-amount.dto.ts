@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { TransactionType } from '@core/enums/transaction-type'
 
 export class UpdateAmountDto {
   @ApiProperty({
@@ -16,11 +17,18 @@ export class UpdateAmountDto {
   currency?: string
 
   @ApiProperty({
-    nullable: false,
+    nullable: true,
     example: 'February',
     description: 'Record title for the financial transaction, e.g., "January", "February"',
   })
-  recordTitle: string
+  recordTitle?: string
+
+  @ApiProperty({
+    nullable: false,
+    example: TransactionType.INCOME,
+    description: `Transaction type, e.g., "${TransactionType.EXPENSE}" or "${TransactionType.INCOME}"`,
+  })
+  transactionType: TransactionType
 
   @ApiProperty({
     nullable: false,

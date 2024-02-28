@@ -1,11 +1,12 @@
+import { v4 as uuid } from 'uuid'
 import { Repository } from 'typeorm'
 import { HttpStatus, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ExchangeRateService } from '@infra/exchange-rate'
-import { getCurrentMonth, getAmount } from '@shared/utils'
+import { getCurrentMonth, getAmount, getUTCDate } from '@shared/utils'
 import { TransactionType } from '@core/enums/transaction-type'
 import { FinancialRecord, Transaction } from '../core/entity'
-import { UpdateAmountDto } from '../core/dto'
+import { CreateTransactionDto, UpdateAmountDto } from '../core/dto'
 
 @Injectable()
 export class TransactionService {
@@ -21,17 +22,19 @@ export class TransactionService {
     name,
     transactionType,
     recordTitle,
+    hasFinancialRecords,
   }: {
     name?: string
     transactionType?: TransactionType
+    hasFinancialRecords?: boolean
     recordTitle?: string
   }) {
+    const financialRecords = hasFinancialRecords ? { countries: true } : false
+
     return this.transactionRepository.find({
       where: { name, type: transactionType, financialRecords: { recordTitle } },
       relations: {
-        financialRecords: {
-          countries: true,
-        },
+        financialRecords,
       },
       order: {
         name: 'ASC',
@@ -42,19 +45,70 @@ export class TransactionService {
     })
   }
 
-  async updateRecordAmount({ name, recordTitle = getCurrentMonth(), currency, amount }: UpdateAmountDto) {
+  async createTransaction({ name, type }: CreateTransactionDto) {
     try {
-      const { id } = await this.transactionRepository.findOneByOrFail({ name: name || '' })
-      const { id: recordId, amount: recordAmount } = await this.financialRecordRepository.findOneByOrFail({
-        transaction: { id },
+      const isTransactionExist = await this.checkIsTransactionExist({ name, type })
+
+      if (isTransactionExist) {
+        return {
+          code: HttpStatus.FOUND,
+          status: 'column already exist',
+        }
+      }
+
+      await this.transactionRepository.save({
+        id: uuid(),
+        name,
+        type,
+      })
+
+      return {
+        code: HttpStatus.CREATED,
+        status: 'success',
+      }
+    } catch (error: unknown) {
+      throw new Error(
+        `Error in TransactionService' service inside "addTransaction" method.
+        Provided name: ${name}, type: ${type}. \n${error}`,
+      )
+    }
+  }
+
+  async updateRecordAmount({
+    name,
+    transactionType,
+    recordTitle = getCurrentMonth(),
+    currency,
+    amount,
+  }: UpdateAmountDto) {
+    try {
+      const transaction = await this.transactionRepository.findOneByOrFail({ name, type: transactionType })
+      const financialRecord = await this.financialRecordRepository.findOneBy({
+        transaction: { id: transaction.id },
         recordTitle,
       })
 
       const convertedAmount = await this.exchangeRateService.getConvertedAmount({ from: currency, amount })
 
+      if (!financialRecord) {
+        this.financialRecordRepository.save({
+          id: uuid(),
+          amount: getAmount({ amount: convertedAmount }),
+          recordTitle,
+          transaction,
+        })
+
+        return {
+          code: HttpStatus.OK,
+          status: 'success',
+        }
+      }
+
+      const { id: recordId, amount: recordAmount } = financialRecord
+
       await this.financialRecordRepository.update(recordId, {
         amount: getAmount({ amount: convertedAmount, recordAmount }),
-        updatedAt: new Date(),
+        updatedAt: getUTCDate(),
       })
 
       return {
@@ -64,8 +118,16 @@ export class TransactionService {
     } catch (error: unknown) {
       throw new Error(
         `Error in TransactionService' service inside "updateRecordAmount" method.
-        Provided name: ${name}, recordTitle: ${recordTitle}, amount: ${amount}. \n${error}`,
+        Provided name: ${name}, currency: ${currency}, transactionType: ${transactionType}, recordTitle: ${recordTitle}, amount: ${amount}. \n${error}`,
       )
     }
+  }
+
+  private async checkIsTransactionExist({ name, type }: CreateTransactionDto) {
+    return this.transactionRepository
+      .createQueryBuilder('transaction')
+      .where('LOWER(transaction.name) = LOWER(:name)', { name })
+      .andWhere('LOWER(transaction.type) = LOWER(:type)', { type })
+      .getExists()
   }
 }

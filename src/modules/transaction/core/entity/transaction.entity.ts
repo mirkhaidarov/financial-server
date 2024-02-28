@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import type { TransactionType } from '@core/enums/transaction-type'
+import { TransactionType } from '@core/enums/transaction-type'
 import { FinancialRecord } from './financial-record.entity'
 import type { TransactionInterface } from '../interface'
 
@@ -8,7 +8,7 @@ import type { TransactionInterface } from '../interface'
 export class Transaction implements TransactionInterface {
   @ApiProperty({ nullable: false })
   @PrimaryColumn({ type: 'uuid' })
-  id: number
+  id: string
 
   @ApiProperty({
     nullable: false,
@@ -19,7 +19,7 @@ export class Transaction implements TransactionInterface {
 
   @ApiProperty({
     nullable: false,
-    description: 'Transaction type, e.g., "Expense" or "Income"',
+    description: `Transaction type, e.g., "${TransactionType.EXPENSE}" or "${TransactionType.INCOME}"`,
   })
   @Column({ type: 'varchar', nullable: false })
   type: TransactionType
