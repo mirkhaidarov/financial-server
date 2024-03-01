@@ -5,14 +5,14 @@ export class AddCountryDto {
   id: string
 
   @ApiProperty({
-    nullable: true,
+    nullable: false,
     description: 'Country name, e.g., "Korea", "Mongolia"',
   })
-  name?: string
+  name: string
 
   @ApiProperty({
-    nullable: true,
+    nullable: false,
     description: 'Country city, e.g., "Seoul", "Ulaanbaatar"',
   })
-  city?: string
+  city: string
 }
