@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { TransactionType } from '@core/enums/transaction-type'
 
-export class CreateTransactionDto {
+export class AddTransactionDto {
   @ApiProperty({
     nullable: false,
     example: 'job',

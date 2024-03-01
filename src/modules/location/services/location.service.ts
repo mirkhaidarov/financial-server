@@ -1,15 +1,18 @@
 import { v4 as uuid } from 'uuid'
 import { Repository } from 'typeorm'
-import { HttpStatus, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { FinancialRecord } from '@modules/transaction/core/entity'
 import { getCurrentMonth, getUTCDate } from '@shared/utils'
+import { ExceptionService } from '@core/modules/exception'
 import { AddCountryDto, AddCityDto } from '../core/dto'
 import { Location } from '../core/entity'
+import { LocationExceptionMessages } from '../core/exception-messages'
 
 @Injectable()
 export class LocationService {
   constructor(
+    private readonly exceptionService: ExceptionService,
     @InjectRepository(Location)
     private readonly locationRepository: Repository<Location>,
     @InjectRepository(FinancialRecord)
@@ -21,10 +24,7 @@ export class LocationService {
       const financialRecord = await this.financialRecordRepository.findOneBy({ recordTitle: getCurrentMonth() })
 
       if (!financialRecord) {
-        return {
-          code: HttpStatus.NOT_FOUND,
-          status: 'Create any transaction first',
-        }
+        return this.exceptionService.notFound(LocationExceptionMessages.FINANCIAL_RECORD_NOT_FOUND)
       }
 
       this.locationRepository.save({
@@ -34,12 +34,12 @@ export class LocationService {
         financialRecord,
       })
 
-      return {
-        code: HttpStatus.OK,
-        status: 'success',
-      }
+      return this.exceptionService.success({
+        message: LocationExceptionMessages.ADD_COUNTRY_SUCCESS,
+        data: { name, city },
+      })
     } catch (error: unknown) {
-      console.error(error)
+      return this.exceptionService.internalServerError(error)
     }
   }
 
@@ -51,10 +51,7 @@ export class LocationService {
       })
 
       if (!location?.id) {
-        return {
-          code: HttpStatus.NOT_FOUND,
-          status: 'Add any country first',
-        }
+        return this.exceptionService.notFound(LocationExceptionMessages.LOCATION_NOT_FOUND)
       }
 
       await this.locationRepository.update(location.id, {
@@ -62,12 +59,9 @@ export class LocationService {
         updatedAt: getUTCDate(),
       })
 
-      return {
-        code: HttpStatus.CREATED,
-        status: 'updated',
-      }
+      return this.exceptionService.success({ message: LocationExceptionMessages.ADD_CITY_SUCCESS, data: { name } })
     } catch (error: unknown) {
-      console.error(error)
+      return this.exceptionService.internalServerError(error)
     }
   }
 }

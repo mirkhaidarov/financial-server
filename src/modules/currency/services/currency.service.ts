@@ -1,29 +1,29 @@
 import { v4 as uuid } from 'uuid'
 import type { Repository } from 'typeorm'
-import { HttpStatus, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ExchangeRateService } from '@infra/exchange-rate'
 import { getUTCDate } from '@shared/utils'
+import { ExceptionService } from '@core/modules/exception'
 import { SetDefaultCurrencyDto } from '../core/dto'
 import { DefaultCurrency } from '../core/entities'
+import { CurrencyExceptionMessages } from '../core/exception-messages'
 
 @Injectable()
 export class CurrencyService {
   constructor(
+    private readonly exceptionService: ExceptionService,
     private readonly exchangeRateService: ExchangeRateService,
     @InjectRepository(DefaultCurrency)
     private readonly defaultCurrencyRepository: Repository<DefaultCurrency>,
   ) {}
 
-  async setDefaultCurrency({ name }: SetDefaultCurrencyDto) {
+  async addDefaultCurrency({ name }: SetDefaultCurrencyDto) {
     try {
-      const result = await this.exchangeRateService.checkIsRateExist(name)
+      const isRateExist = await this.exchangeRateService.checkIsRateExist(name)
 
-      if (!result) {
-        return {
-          code: HttpStatus.NOT_FOUND,
-          status: 'Provided rate name is not exist',
-        }
+      if (!isRateExist) {
+        return this.exceptionService.notFound(CurrencyExceptionMessages.RATE_NOT_FOUND)
       }
 
       const { id: previousCurrencyId } = (await this.defaultCurrencyRepository.findOne({ where: {} })) || {}
@@ -34,24 +34,16 @@ export class CurrencyService {
           updatedAt: getUTCDate(),
         })
 
-        return {
-          code: HttpStatus.OK,
-          status: 'updated',
-        }
+        return this.exceptionService.success({
+          message: CurrencyExceptionMessages.UPDATE_CURRENCY_SUCCESS,
+        })
       }
 
       await this.defaultCurrencyRepository.save({ id: uuid(), name })
 
-      return {
-        code: HttpStatus.OK,
-        status: 'created',
-      }
+      return this.exceptionService.success({ message: CurrencyExceptionMessages.ADD_CURRENCY_SUCCESS })
     } catch (error: unknown) {
-      console.error(
-        `Error inside ExchangeRateService in setDefaultCurrency method.
-        Setting default currency fail.
-        Provided currency name equal: ${name}. \n${error}`,
-      )
+      return this.exceptionService.internalServerError(error)
     }
   }
 }

@@ -1,17 +1,20 @@
 import { v4 as uuid } from 'uuid'
 import { Repository } from 'typeorm'
-import { HttpStatus, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ExchangeRateService } from '@infra/exchange-rate'
 import { getCurrentMonth, getAmount, getUTCDate } from '@shared/utils'
 import { TransactionType } from '@core/enums/transaction-type'
 import { DefaultCurrency } from '@modules/currency/core/entities'
+import { ExceptionService } from '@core/modules/exception'
 import { FinancialRecord, Transaction } from '../core/entity'
-import { CreateTransactionDto, UpdateAmountDto } from '../core/dto'
+import { AddTransactionDto, UpdateAmountDto } from '../core/dto'
+import { TransactionExceptionMessages } from '../core/exception-messages'
 
 @Injectable()
 export class TransactionService {
   constructor(
+    private readonly exceptionService: ExceptionService,
     private readonly exchangeRateService: ExchangeRateService,
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
@@ -48,15 +51,12 @@ export class TransactionService {
     })
   }
 
-  async createTransaction({ name, type }: CreateTransactionDto) {
+  async addTransaction({ name, type }: AddTransactionDto) {
     try {
       const isTransactionExist = await this.checkIsTransactionExist({ name, type })
 
       if (isTransactionExist) {
-        return {
-          code: HttpStatus.FOUND,
-          status: 'column already exist',
-        }
+        return this.exceptionService.success({ message: TransactionExceptionMessages.ADD_TRANSACTION_EXIST })
       }
 
       await this.transactionRepository.save({
@@ -65,15 +65,9 @@ export class TransactionService {
         type,
       })
 
-      return {
-        code: HttpStatus.CREATED,
-        status: 'success',
-      }
+      return this.exceptionService.success({ message: TransactionExceptionMessages.ADD_TRANSACTION_SUCCESS })
     } catch (error: unknown) {
-      throw new Error(
-        `Error in TransactionService' service inside "addTransaction" method.
-        Provided name: ${name}, type: ${type}. \n${error}`,
-      )
+      return this.exceptionService.internalServerError(error)
     }
   }
 
@@ -105,10 +99,7 @@ export class TransactionService {
           transaction,
         })
 
-        return {
-          code: HttpStatus.OK,
-          status: 'success',
-        }
+        return this.exceptionService.success({ message: TransactionExceptionMessages.ADD_RECORD_AMOUNT_SUCCESS })
       }
 
       const { id: recordId, amount: recordAmount } = financialRecord
@@ -118,19 +109,13 @@ export class TransactionService {
         updatedAt: getUTCDate(),
       })
 
-      return {
-        code: HttpStatus.CREATED,
-        status: 'success',
-      }
+      return this.exceptionService.success({ message: TransactionExceptionMessages.UPDATE_RECORD_AMOUNT_SUCCESS })
     } catch (error: unknown) {
-      throw new Error(
-        `Error in TransactionService' service inside "updateRecordAmount" method.
-        Provided name: ${name}, currency: ${currency}, transactionType: ${transactionType}, recordTitle: ${recordTitle}, amount: ${amount}. \n${error}`,
-      )
+      return this.exceptionService.internalServerError(error)
     }
   }
 
-  private async checkIsTransactionExist({ name, type }: CreateTransactionDto) {
+  private async checkIsTransactionExist({ name, type }: AddTransactionDto) {
     return this.transactionRepository
       .createQueryBuilder('transaction')
       .where('LOWER(transaction.name) = LOWER(:name)', { name })
