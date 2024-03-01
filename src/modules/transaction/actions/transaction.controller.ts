@@ -1,9 +1,8 @@
-import { Body, Controller, Get, HttpStatus, Post, Put, Query } from '@nestjs/common'
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common'
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 import { TransactionType } from '@core/enums/transaction-type'
 import { TransactionService } from '../services'
-import { CreateTransactionDto, UpdateAmountDto } from '../core/dto'
-import { Transaction } from '../core/entity'
+import { AddTransactionDto, UpdateAmountDto } from '../core/dto'
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -40,7 +39,6 @@ export class TransactionController {
     example: true,
     description: 'Will Transaction response has financialRecords or not',
   })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Success', type: () => Transaction })
   async getTransactions(
     @Query('name') name?: string,
     @Query('transactionType') transactionType?: TransactionType,
@@ -50,14 +48,13 @@ export class TransactionController {
     return this.transactionService.getTransactions({ name, transactionType, recordTitle, hasFinancialRecords })
   }
 
-  @Post('create')
-  @ApiOperation({ summary: 'Create a new transaction' })
+  @Post('add')
+  @ApiOperation({ summary: 'Add new transaction' })
   @ApiBody({
-    type: CreateTransactionDto,
+    type: AddTransactionDto,
   })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Success' })
-  async addTransaction(@Body() body: CreateTransactionDto) {
-    return this.transactionService.createTransaction(body)
+  async addTransaction(@Body() body: AddTransactionDto) {
+    return this.transactionService.addTransaction(body)
   }
 
   @Put('update')
@@ -65,7 +62,6 @@ export class TransactionController {
   @ApiBody({
     type: UpdateAmountDto,
   })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Success' })
   async updateRecordAmount(@Body() body: UpdateAmountDto) {
     return this.transactionService.updateRecordAmount(body)
   }

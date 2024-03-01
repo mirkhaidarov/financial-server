@@ -1,5 +1,5 @@
-import { Body, Controller, HttpStatus, Post, Put } from '@nestjs/common'
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { Body, Controller, Post, Put } from '@nestjs/common'
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { AddCountryDto, AddCityDto } from '../core/dto'
 import { LocationService } from '../services'
 
@@ -13,8 +13,7 @@ export class LocationController {
   @ApiBody({
     type: AddCountryDto,
   })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Success' })
-  createCountry(@Body() body: AddCountryDto) {
+  addCountry(@Body() body: AddCountryDto) {
     return this.locationService.addCountry(body)
   }
 
@@ -23,8 +22,7 @@ export class LocationController {
   @ApiBody({
     type: AddCityDto,
   })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Success' })
-  createCity(@Body() body: AddCityDto) {
+  addCity(@Body() body: AddCityDto) {
     return this.locationService.addCity(body)
   }
 }
