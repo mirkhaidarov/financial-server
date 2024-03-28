@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common'
-import { ExchangeRateController } from './actions/exchange-rate.controller'
-import { ExchangeRateService } from './services/exchange-rate.service'
+import { ExceptionService } from '@core/modules/exception'
+import { ExchangeRateController } from './actions'
+import { ExchangeRateService } from './services'
 
 @Module({
   controllers: [ExchangeRateController],
-  providers: [ExchangeRateService],
+  providers: [ExchangeRateService, ExceptionService],
   exports: [ExchangeRateService],
 })
 export class ExchangeRateModule {}
