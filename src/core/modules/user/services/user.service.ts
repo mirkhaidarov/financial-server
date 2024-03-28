@@ -3,10 +3,12 @@ import { HttpStatus, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { User } from '../core/entity'
 import { CreateUserDto } from '../core/dto'
+import { ExceptionService } from '@core/modules/exception'
 
 @Injectable()
 export class UserService {
   constructor(
+    private readonly exceptionService: ExceptionService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
@@ -16,8 +18,8 @@ export class UserService {
       this.userRepository.save(body)
 
       return { status: HttpStatus.CREATED, description: 'Success' }
-    } catch (error) {
-      console.error(`Error inside UserService in createUser method. \n${error}`)
+    } catch (error: unknown) {
+      this.exceptionService.internalServerError(error)
     }
   }
 }
