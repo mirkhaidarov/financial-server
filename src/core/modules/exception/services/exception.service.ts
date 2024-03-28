@@ -5,18 +5,7 @@ import {
   InternalServerErrorException,
   HttpExceptionOptions,
 } from '@nestjs/common'
-
-type SuccessArgs<DataType> = {
-  message: string
-  data?: Record<string, DataType>
-  status?: HttpStatus
-}
-
-type SuccessResponse<DataType> = {
-  message: string
-  data?: Record<string, DataType>
-  status: HttpStatus
-}
+import type { SuccessArgs, SuccessResponse } from '../core/types'
 
 @Injectable()
 export class ExceptionService {
@@ -24,14 +13,14 @@ export class ExceptionService {
     objectOrError?: ErrorType,
     descriptionOrOptions?: string | HttpExceptionOptions,
   ): NotFoundException {
-    return new NotFoundException(objectOrError, descriptionOrOptions)
+    throw new NotFoundException(objectOrError, descriptionOrOptions)
   }
 
   internalServerError<ErrorType>(
     objectOrError?: ErrorType,
     descriptionOrOptions?: string | HttpExceptionOptions,
   ): InternalServerErrorException {
-    return new InternalServerErrorException(objectOrError, descriptionOrOptions)
+    throw new InternalServerErrorException(objectOrError, descriptionOrOptions)
   }
 
   success<DataType>({ message, data, status }: SuccessArgs<DataType>): SuccessResponse<DataType> {
