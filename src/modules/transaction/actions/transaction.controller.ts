@@ -1,9 +1,8 @@
-import { Body, Controller, Get, HttpStatus, Put, Query } from '@nestjs/common'
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common'
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 import { TransactionType } from '@core/enums/transaction-type'
 import { TransactionService } from '../services'
-import { UpdateAmountDto } from '../core/dto'
-import { Transaction } from '../core/entity'
+import { AddTransactionDto, UpdateAmountDto } from '../core/dto'
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -33,21 +32,36 @@ export class TransactionController {
     example: 'February',
     description: `Filter records by title. For example get records witch title equal "January"`,
   })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Success', type: () => Transaction })
+  @ApiQuery({
+    name: 'hasFinancialRecords',
+    type: Boolean,
+    required: false,
+    example: true,
+    description: 'Will Transaction response has financialRecords or not',
+  })
   async getTransactions(
     @Query('name') name?: string,
     @Query('transactionType') transactionType?: TransactionType,
     @Query('recordTitle') recordTitle?: string,
+    @Query('hasFinancialRecords') hasFinancialRecords?: boolean,
   ) {
-    return this.transactionService.getTransactions({ name, transactionType, recordTitle })
+    return this.transactionService.getTransactions({ name, transactionType, recordTitle, hasFinancialRecords })
   }
 
-  @Put()
+  @Post('add')
+  @ApiOperation({ summary: 'Add new transaction' })
+  @ApiBody({
+    type: AddTransactionDto,
+  })
+  async addTransaction(@Body() body: AddTransactionDto) {
+    return this.transactionService.addTransaction(body)
+  }
+
+  @Put('update')
   @ApiOperation({ summary: 'Update amount in record' })
   @ApiBody({
     type: UpdateAmountDto,
   })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Success' })
   async updateRecordAmount(@Body() body: UpdateAmountDto) {
     return this.transactionService.updateRecordAmount(body)
   }

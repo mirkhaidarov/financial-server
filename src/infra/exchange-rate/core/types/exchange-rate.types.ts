@@ -1,7 +1,11 @@
-export type Currencies = Record<string, number>
+export type CurrencyAmount = Record<string, number>
 
-export type ExchangeRate = {
-  [currency: string]: Currencies
+type Date = {
+  date: string
+}
+
+export type ExchangeRate = Date & {
+  [currency: string]: CurrencyAmount
 }
 
 export type ConvertAmountArgs = {

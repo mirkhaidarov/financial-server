@@ -1,55 +1,13 @@
-import { v4 as uuid } from 'uuid'
-import type { Repository } from 'typeorm'
-import { InjectRepository } from '@nestjs/typeorm'
-import { HttpStatus, Injectable } from '@nestjs/common'
-import type { ConvertAmountArgs, ExchangeRate, GetConvertedAmountArgs, Currencies } from '../core/types'
-import { DefaultCurrency } from '../core/entities'
-import { SetDefaultCurrencyDto } from '../core/dto'
+import { Injectable } from '@nestjs/common'
+import { ExceptionService } from '@core/modules/exception'
+import type { SuccessResponse } from '@core/modules/exception'
+import type { ConvertAmountArgs, CurrencyAmount, ExchangeRate, GetConvertedAmountArgs } from '../core/types'
 import { DEFAULT_AMOUNT, DEFAULT_CURRENCY, EXCHANGE_RATE_URI } from '../core/constants'
+import { ExchangeRateExceptionMessages } from '../core/exception-messages'
 
 @Injectable()
 export class ExchangeRateService {
-  constructor(
-    @InjectRepository(DefaultCurrency)
-    private readonly defaultCurrencyRepository: Repository<DefaultCurrency>,
-  ) {}
-
-  async setDefaultCurrency({ name }: SetDefaultCurrencyDto) {
-    try {
-      const result = await this.checkIsRateExist({ name })
-
-      if (!result) {
-        return {
-          code: HttpStatus.NOT_FOUND,
-          status: 'Provided rate name is not exist',
-        }
-      }
-
-      const previousCurrency = await this.defaultCurrencyRepository.findOne({ where: {} })
-
-      if (previousCurrency) {
-        await this.defaultCurrencyRepository.update(previousCurrency, { name })
-
-        return {
-          code: HttpStatus.OK,
-          status: 'updated',
-        }
-      }
-
-      await this.defaultCurrencyRepository.save({ id: uuid(), name })
-
-      return {
-        code: HttpStatus.OK,
-        status: 'created',
-      }
-    } catch (error: unknown) {
-      console.error(
-        `Error inside ExchangeRateService in setDefaultCurrency method.
-        Setting default currency fail.
-        Provided currency name equal: ${name}. \n${error}`,
-      )
-    }
-  }
+  constructor(private readonly exceptionService: ExceptionService) {}
 
   async getConvertedAmount({
     from,
@@ -58,22 +16,20 @@ export class ExchangeRateService {
     digits = 2,
   }: GetConvertedAmountArgs) {
     try {
-      let defaultCurrency: DefaultCurrency | null = null
       const lowerFrom = from?.toLowerCase()
       const lowerTo = to.toLowerCase()
 
-      if (!lowerFrom) {
-        defaultCurrency = await this.defaultCurrencyRepository.findOne({ where: {} })
+      const isFromExist = await this.checkIsCurrencyExist(lowerFrom)
+      const isToExist = await this.checkIsCurrencyExist(lowerTo)
+
+      if (!isFromExist && !isToExist) {
+        this.exceptionService.notFound(ExchangeRateExceptionMessages.CURRENCY_NOT_FOUND)
       }
 
-      const rate = await this.getRate({ from: defaultCurrency?.name || lowerFrom, to: lowerTo })
-
+      const rate = await this.getRate({ from: lowerFrom, to: lowerTo })
       return this.convertAmount({ rate, to: lowerTo, amount, digits })
     } catch (error: unknown) {
-      console.error(
-        `Error in ExchangeRateService inside getConvertedAmount method.
-         Params equals - from: ${from}, to: ${to} and amount: ${amount}. \n${error}`,
-      )
+      this.exceptionService.internalServerError(error)
     }
   }
 
@@ -91,56 +47,54 @@ export class ExchangeRateService {
       .replace(/[^0-9.]/g, '')
   }
 
-  private async checkIsRateExist({ name }: SetDefaultCurrencyDto): Promise<boolean> {
+  async checkIsCurrencyExist(name: string): Promise<boolean> {
     const currencies = await this.getCurrencies()
 
-    if (!currencies) {
+    if (!currencies.length) {
       return false
     }
 
-    return currencies.some((rate) => rate === name)
+    return currencies.some((currency) => currency === name)
   }
 
-  private async getRate({ from, to }: { from?: string; to: string }): Promise<number | undefined> {
-    try {
-      if (!from) {
-        throw new Error('The currency name for which the conversion will be performed has not been provided.')
-      }
-      const URI = `${EXCHANGE_RATE_URI}/${from}/${to}.json`
+  private async getRate({ from, to }: { from: string; to: string }): Promise<number | undefined> {
+    const { data } = await this.fetchCurrenciesRate(from)
 
-      const response = await fetch(URI)
-
-      if (!response.ok) {
-        throw new Error(response.statusText)
-      }
-
-      const result: Currencies = await response.json()
-
-      return result[to]
-    } catch (error: unknown) {
-      console.error(error)
+    if (!data) {
       return
     }
+
+    return data[to]
   }
 
-  private async getCurrencies(): Promise<string[] | undefined> {
-    const currency = DEFAULT_CURRENCY
-    const URI = `${EXCHANGE_RATE_URI}/${DEFAULT_CURRENCY}.json`
+  private async getCurrencies(): Promise<string[]> {
+    const { data } = await this.fetchCurrenciesRate()
 
+    if (!data) {
+      return []
+    }
+
+    return Object.keys(data)
+  }
+
+  private async fetchCurrenciesRate(currency: string = DEFAULT_CURRENCY): Promise<SuccessResponse<CurrencyAmount>> {
     try {
+      const URI = `${EXCHANGE_RATE_URI}/${currency}.min.json`
+
       const response = await fetch(URI)
 
       if (!response.ok) {
-        throw new Error(response.statusText)
+        this.exceptionService.internalServerError(response.statusText)
       }
 
       const result: ExchangeRate = await response.json()
-      const currencies = Object.keys(result[currency])
 
-      return currencies
+      return this.exceptionService.success({
+        data: result[currency],
+        message: response.statusText,
+      })
     } catch (error: unknown) {
-      console.error(error)
-      return
+      this.exceptionService.internalServerError(error)
     }
   }
 }

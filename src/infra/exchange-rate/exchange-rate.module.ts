@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { DefaultCurrency } from './core/entities'
-import { ExchangeRateController } from './actions/exchange-rate.controller'
-import { ExchangeRateService } from './services/exchange-rate.service'
+import { ExceptionService } from '@core/modules/exception'
+import { ExchangeRateController } from './actions'
+import { ExchangeRateService } from './services'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DefaultCurrency])],
   controllers: [ExchangeRateController],
-  providers: [ExchangeRateService],
+  providers: [ExchangeRateService, ExceptionService],
   exports: [ExchangeRateService],
 })
 export class ExchangeRateModule {}
