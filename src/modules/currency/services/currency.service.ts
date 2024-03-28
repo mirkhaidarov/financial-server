@@ -23,7 +23,7 @@ export class CurrencyService {
       const isCurrencyExist = await this.exchangeRateService.checkIsCurrencyExist(name)
 
       if (!isCurrencyExist) {
-        return this.exceptionService.notFound(CurrencyExceptionMessages.CURRENCY_NOT_FOUND)
+        this.exceptionService.notFound(CurrencyExceptionMessages.CURRENCY_NOT_FOUND)
       }
 
       const { id: previousCurrencyId } = (await this.defaultCurrencyRepository.findOne({ where: {} })) || {}
@@ -43,7 +43,7 @@ export class CurrencyService {
 
       return this.exceptionService.success({ message: CurrencyExceptionMessages.ADD_CURRENCY_SUCCESS })
     } catch (error: unknown) {
-      return this.exceptionService.internalServerError(error)
+      this.exceptionService.internalServerError(error)
     }
   }
 }
