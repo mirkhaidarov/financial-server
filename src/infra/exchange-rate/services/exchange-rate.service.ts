@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common'
-import type { ConvertAmountArgs, ExchangeRate, GetConvertedAmountArgs, Currencies } from '../core/types'
+import { ExceptionService } from '@core/modules/exception'
+import type { SuccessResponse } from '@core/modules/exception'
+import type { ConvertAmountArgs, CurrencyAmount, ExchangeRate, GetConvertedAmountArgs } from '../core/types'
 import { DEFAULT_AMOUNT, DEFAULT_CURRENCY, EXCHANGE_RATE_URI } from '../core/constants'
+import { ExchangeRateExceptionMessages } from '../core/exception-messages'
 
 @Injectable()
 export class ExchangeRateService {
+  constructor(private readonly exceptionService: ExceptionService) {}
+
   async getConvertedAmount({
     from,
     to = DEFAULT_CURRENCY,
@@ -14,20 +19,17 @@ export class ExchangeRateService {
       const lowerFrom = from?.toLowerCase()
       const lowerTo = to.toLowerCase()
 
-      const isFromExist = await this.checkIsRateExist(lowerFrom)
-      const isToExist = await this.checkIsRateExist(lowerTo)
+      const isFromExist = await this.checkIsCurrencyExist(lowerFrom)
+      const isToExist = await this.checkIsCurrencyExist(lowerTo)
 
-      if (isFromExist && isToExist) {
-        const rate = await this.getRate({ from: lowerFrom, to: lowerTo })
-        return this.convertAmount({ rate, to: lowerTo, amount, digits })
+      if (!isFromExist && !isToExist) {
+        this.exceptionService.notFound(ExchangeRateExceptionMessages.CURRENCY_NOT_FOUND)
       }
 
-      throw new Error()
+      const rate = await this.getRate({ from: lowerFrom, to: lowerTo })
+      return this.convertAmount({ rate, to: lowerTo, amount, digits })
     } catch (error: unknown) {
-      console.error(
-        `Error in ExchangeRateService inside getConvertedAmount method.
-         Params equals - from: ${from}, to: ${to} and amount: ${amount}. \n${error}`,
-      )
+      this.exceptionService.internalServerError(error)
     }
   }
 
@@ -45,53 +47,54 @@ export class ExchangeRateService {
       .replace(/[^0-9.]/g, '')
   }
 
-  async checkIsRateExist(name: string): Promise<boolean> {
+  async checkIsCurrencyExist(name: string): Promise<boolean> {
     const currencies = await this.getCurrencies()
 
-    if (!currencies) {
+    if (!currencies.length) {
       return false
     }
 
-    return currencies.some((rate) => rate === name)
+    return currencies.some((currency) => currency === name)
   }
 
-  private async getRate({ from, to }: { from?: string; to: string }): Promise<number | undefined> {
-    try {
-      const URI = `${EXCHANGE_RATE_URI}/${from}/${to}.json`
+  private async getRate({ from, to }: { from: string; to: string }): Promise<number | undefined> {
+    const { data } = await this.fetchCurrenciesRate(from)
 
-      const response = await fetch(URI)
-
-      if (!response.ok) {
-        throw new Error(response.statusText)
-      }
-
-      const result: Currencies = await response.json()
-
-      return result[to]
-    } catch (error: unknown) {
-      console.error(error)
+    if (!data) {
       return
     }
+
+    return data[to]
   }
 
-  private async getCurrencies(): Promise<string[] | undefined> {
-    const currency = DEFAULT_CURRENCY
-    const URI = `${EXCHANGE_RATE_URI}/${DEFAULT_CURRENCY}.json`
+  private async getCurrencies(): Promise<string[]> {
+    const { data } = await this.fetchCurrenciesRate()
 
+    if (!data) {
+      return []
+    }
+
+    return Object.keys(data)
+  }
+
+  private async fetchCurrenciesRate(currency: string = DEFAULT_CURRENCY): Promise<SuccessResponse<CurrencyAmount>> {
     try {
+      const URI = `${EXCHANGE_RATE_URI}/${currency}.min.json`
+
       const response = await fetch(URI)
 
       if (!response.ok) {
-        throw new Error(response.statusText)
+        this.exceptionService.internalServerError(response.statusText)
       }
 
       const result: ExchangeRate = await response.json()
-      const currencies = Object.keys(result[currency])
 
-      return currencies
+      return this.exceptionService.success({
+        data: result[currency],
+        message: response.statusText,
+      })
     } catch (error: unknown) {
-      console.error(error)
-      return
+      this.exceptionService.internalServerError(error)
     }
   }
 }

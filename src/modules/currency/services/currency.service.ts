@@ -20,10 +20,10 @@ export class CurrencyService {
 
   async addDefaultCurrency({ name }: SetDefaultCurrencyDto) {
     try {
-      const isRateExist = await this.exchangeRateService.checkIsRateExist(name)
+      const isCurrencyExist = await this.exchangeRateService.checkIsCurrencyExist(name)
 
-      if (!isRateExist) {
-        return this.exceptionService.notFound(CurrencyExceptionMessages.RATE_NOT_FOUND)
+      if (!isCurrencyExist) {
+        return this.exceptionService.notFound(CurrencyExceptionMessages.CURRENCY_NOT_FOUND)
       }
 
       const { id: previousCurrencyId } = (await this.defaultCurrencyRepository.findOne({ where: {} })) || {}
