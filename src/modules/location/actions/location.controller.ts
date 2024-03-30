@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Put } from '@nestjs/common'
+import { Body, Controller, Post } from '@nestjs/common'
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { AddCountryDto, AddCityDto } from '../core/dto'
 import { LocationService } from '../services'
@@ -17,7 +17,7 @@ export class LocationController {
     return this.locationService.addCountry(body)
   }
 
-  @Put('add/city')
+  @Post('add/city')
   @ApiOperation({ summary: 'Add city' })
   @ApiBody({
     type: AddCityDto,

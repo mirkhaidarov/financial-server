@@ -1,1 +1,2 @@
-export * from './location.entity'
+export * from './city.entity'
+export * from './country.entity'
