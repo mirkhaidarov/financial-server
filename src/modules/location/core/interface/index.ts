@@ -1,1 +1,2 @@
-export * from './location.interface'
+export * from './city.interface'
+export * from './country.interface'
