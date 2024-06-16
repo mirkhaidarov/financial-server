@@ -6,6 +6,7 @@ import { ExchangeRateService } from '@infra/exchange-rate'
 import { getCurrentMonth, getAmount, getUTCDate } from '@shared/utils'
 import { TransactionType } from '@core/enums/transaction-type'
 import { User } from '@modules/user/core/entity'
+import { Country } from '@modules/location/core/entity'
 import { ExceptionService } from '@core/modules/exception'
 import { FinancialRecord, Transaction } from '../core/entity'
 import { AddTransactionDto, UpdateAmountDto } from '../core/dto'
@@ -22,6 +23,8 @@ export class TransactionService {
     private readonly financialRecordRepository: Repository<FinancialRecord>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Country)
+    private readonly countryRepository: Repository<Country>,
   ) {}
 
   async getTransactions({
@@ -85,10 +88,15 @@ export class TransactionService {
         transaction: { id: transaction.id },
         recordTitle,
       })
-      const { currency: defaultCurrency } = (await this.userRepository.findOneBy({ id })) || {}
+      const user = await this.userRepository.findOneBy({ id })
+      const [lastCountry] = await this.countryRepository.find({
+        take: 1,
+        order: { createdAt: 'DESC' },
+        relations: { financialRecord: true },
+      })
 
       const convertedAmount = await this.exchangeRateService.getConvertedAmount({
-        from: currency || defaultCurrency,
+        from: currency || user.currency,
         amount,
       })
 
@@ -98,9 +106,16 @@ export class TransactionService {
           amount: getAmount({ amount: convertedAmount }),
           recordTitle,
           transaction,
+          countries: [lastCountry],
         })
 
         return this.exceptionService.success({ message: TransactionExceptionMessages.ADD_RECORD_AMOUNT_SUCCESS })
+      }
+
+      if (!lastCountry?.financialRecord) {
+        await this.countryRepository.update(lastCountry.id, {
+          financialRecord,
+        })
       }
 
       const { id: recordId, amount: recordAmount } = financialRecord
