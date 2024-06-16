@@ -35,7 +35,7 @@ export class TransactionService {
     hasFinancialRecords?: boolean
     recordTitle?: string
   }) {
-    const financialRecords = hasFinancialRecords ? { locations: true } : false
+    const financialRecords = hasFinancialRecords ? { countries: { cities: true } } : false
 
     return this.transactionRepository.find({
       where: { name, type: transactionType, financialRecords: { recordTitle } },

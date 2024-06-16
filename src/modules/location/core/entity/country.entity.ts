@@ -1,10 +1,11 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm'
+import { Entity, Column, PrimaryColumn, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { FinancialRecord } from '@modules/transaction/core/entity'
-import type { LocationInterface } from '../interface'
+import type { CountryInterface } from '../interface'
+import { City } from './city.entity'
 
 @Entity()
-export class Location implements LocationInterface {
+export class Country implements CountryInterface {
   @ApiProperty({ nullable: false })
   @PrimaryColumn({ type: 'uuid' })
   id: string
@@ -22,13 +23,9 @@ export class Location implements LocationInterface {
   @Column({ type: 'varchar', nullable: false })
   name: string
 
-  @ApiProperty({
-    nullable: false,
-    description: 'City name, e.g., "Seoul", "Ulaanbaatar"',
-  })
-  @Column({ type: 'varchar', nullable: false })
-  city: string
+  @OneToMany(() => City, ({ country }) => country)
+  cities?: City[]
 
-  @ManyToOne(() => FinancialRecord, ({ locations }) => locations)
+  @ManyToOne(() => FinancialRecord, ({ countries }) => countries)
   financialRecord: FinancialRecord
 }

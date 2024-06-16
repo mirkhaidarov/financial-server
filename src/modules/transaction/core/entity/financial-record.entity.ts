@@ -2,7 +2,7 @@ import { Entity, Column, PrimaryColumn, ManyToOne, CreateDateColumn, UpdateDateC
 import { ApiProperty } from '@nestjs/swagger'
 import { Transaction } from './transaction.entity'
 import type { FinancialRecordInterface } from '../interface'
-import { Location } from '@modules/location/core/entity'
+import { Country } from '@modules/location/core/entity'
 
 @Entity()
 export class FinancialRecord implements FinancialRecordInterface {
@@ -33,6 +33,6 @@ export class FinancialRecord implements FinancialRecordInterface {
   @ManyToOne(() => Transaction, ({ financialRecords }) => financialRecords)
   transaction: Transaction
 
-  @OneToMany(() => Location, ({ financialRecord }) => financialRecord)
-  locations: Location[]
+  @OneToMany(() => Country, ({ financialRecord }) => financialRecord)
+  countries: Country[]
 }
