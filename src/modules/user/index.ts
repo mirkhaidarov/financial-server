@@ -1,4 +1,4 @@
-export * from './transaction.module'
+export * from './user.module'
 export * from './services'
 
 // User.Role = Table Role

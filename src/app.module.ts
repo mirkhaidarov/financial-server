@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { TypeOrmModule } from '@infra/typeorm'
-import { UserModule } from '@core/modules/user'
 import { ExchangeRateModule } from '@infra/exchange-rate'
+import { UserModule } from '@modules/user'
 import { TransactionModule } from '@modules/transaction'
 import { LocationModule } from '@modules/location'
-import { CurrencyModule } from '@modules/currency'
 
 @Module({
   imports: [
@@ -15,9 +14,9 @@ import { CurrencyModule } from '@modules/currency'
     TypeOrmModule,
     UserModule,
     ExchangeRateModule,
+    UserModule,
     TransactionModule,
     LocationModule,
-    CurrencyModule,
   ],
 })
 export class AppModule {}
