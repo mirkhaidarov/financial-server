@@ -3,7 +3,6 @@ import { ApiProperty } from '@nestjs/swagger'
 export class CurrencyDto {
   @ApiProperty({
     nullable: false,
-    example: 'USD',
     description: 'User uniq identifier',
   })
   id: number
