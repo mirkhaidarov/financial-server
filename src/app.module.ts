@@ -12,7 +12,6 @@ import { LocationModule } from '@modules/location'
       envFilePath: '.env',
     }),
     TypeOrmModule,
-    UserModule,
     ExchangeRateModule,
     UserModule,
     TransactionModule,
