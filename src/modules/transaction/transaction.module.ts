@@ -5,11 +5,11 @@ import { TransactionController } from './actions'
 import { TransactionService } from './services'
 import { Transaction, FinancialRecord } from './core/entity'
 import { Country } from '@modules/location/core/entity'
-import { DefaultCurrency } from '@modules/currency/core/entities'
 import { ExceptionService } from '@core/modules/exception'
+import { User } from '@modules/user/core/entity'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Transaction, FinancialRecord, Country, DefaultCurrency]), ExchangeRateModule],
+  imports: [TypeOrmModule.forFeature([Transaction, FinancialRecord, Country, User]), ExchangeRateModule],
   controllers: [TransactionController],
   providers: [TransactionService, ExceptionService],
   exports: [TransactionService],

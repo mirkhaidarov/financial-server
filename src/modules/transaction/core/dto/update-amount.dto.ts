@@ -4,6 +4,12 @@ import { TransactionType } from '@core/enums/transaction-type'
 export class UpdateAmountDto {
   @ApiProperty({
     nullable: false,
+    description: 'User uniq identifier',
+  })
+  id: number
+
+  @ApiProperty({
+    nullable: false,
     example: 'job',
     description: 'Transaction name, e.g., "health", "education"',
   })

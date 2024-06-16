@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { ExchangeRateService } from '@infra/exchange-rate'
 import { getCurrentMonth, getAmount, getUTCDate } from '@shared/utils'
 import { TransactionType } from '@core/enums/transaction-type'
-import { DefaultCurrency } from '@modules/currency/core/entities'
+import { User } from '@modules/user/core/entity'
 import { ExceptionService } from '@core/modules/exception'
 import { FinancialRecord, Transaction } from '../core/entity'
 import { AddTransactionDto, UpdateAmountDto } from '../core/dto'
@@ -20,8 +20,8 @@ export class TransactionService {
     private readonly transactionRepository: Repository<Transaction>,
     @InjectRepository(FinancialRecord)
     private readonly financialRecordRepository: Repository<FinancialRecord>,
-    @InjectRepository(DefaultCurrency)
-    private readonly defaultCurrencyRepository: Repository<DefaultCurrency>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async getTransactions({
@@ -72,6 +72,7 @@ export class TransactionService {
   }
 
   async updateRecordAmount({
+    id,
     name,
     transactionType,
     recordTitle = getCurrentMonth(),
@@ -84,10 +85,10 @@ export class TransactionService {
         transaction: { id: transaction.id },
         recordTitle,
       })
-      const defaultCurrency = await this.defaultCurrencyRepository.findOne({ where: {} })
+      const { currency: defaultCurrency } = (await this.userRepository.findOneBy({ id })) || {}
 
       const convertedAmount = await this.exchangeRateService.getConvertedAmount({
-        from: currency || defaultCurrency.name,
+        from: currency || defaultCurrency,
         amount,
       })
 
