@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { ExceptionService } from '@core/modules/exception'
 import { ExchangeRateService } from '@infra/exchange-rate'
 import { getUTCDate } from '@shared/utils'
+import { DEFAULT_CURRENCY } from '@infra/exchange-rate/core/constants'
 import { User } from '../core/entity'
 import { AddUserDto, CurrencyDto } from '../core/dto'
 import { UserExceptionMessages } from '../core/exception-messages'
@@ -17,7 +18,7 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async addUser({ id, firstName, lastName, nickName, language, currency }: AddUserDto) {
+  async addUser({ id, firstName, lastName, nickName, language }: AddUserDto) {
     try {
       const user = await this.userRepository.findOneBy({ id })
 
@@ -31,7 +32,7 @@ export class UserService {
         lastName,
         nickName,
         language,
-        currency,
+        currency: DEFAULT_CURRENCY,
       })
 
       return this.exceptionService.success({ message: UserExceptionMessages.ADD_USER_SUCCESS })
