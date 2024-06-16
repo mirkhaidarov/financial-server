@@ -30,10 +30,4 @@ export class AddUserDto {
     description: 'User language code, e.g., "en", "es"',
   })
   language: string
-
-  @ApiProperty({
-    nullable: false,
-    description: 'User language code, e.g., "en", "es"',
-  })
-  currency: string
 }

@@ -4,4 +4,5 @@ export interface UserInterface {
   readonly lastName?: string
   readonly nickName: string
   readonly language: string
+  readonly currency: string
 }
