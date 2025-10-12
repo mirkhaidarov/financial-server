@@ -17,11 +17,17 @@ export class LocationService {
     private readonly countryRepository: Repository<Country>,
   ) {}
 
-  async addCountry({ name }: AddCountryDto) {
+  async addCountry({ name, city }: AddCountryDto) {
     try {
-      await this.countryRepository.save({
+      const country = await this.countryRepository.save({
         id: uuid(),
         name,
+      })
+
+      await this.cityRepository.save({
+        id: uuid(),
+        name: city,
+        country,
       })
 
       return this.exceptionService.success({
