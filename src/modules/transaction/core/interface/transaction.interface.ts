@@ -4,4 +4,5 @@ export interface TransactionInterface {
   readonly id: string
   readonly name: string
   readonly type: TransactionType
+  readonly currency?: string
 }
