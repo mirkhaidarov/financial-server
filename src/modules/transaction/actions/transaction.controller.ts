@@ -3,6 +3,7 @@ import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 import { TransactionType } from '@core/enums/transaction-type'
 import { TransactionService } from '../services'
 import { AddTransactionDto, UpdateAmountDto } from '../core/dto'
+import { UpdateCurrencyDto } from '../core/dto/update-currency.dto'
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -57,12 +58,21 @@ export class TransactionController {
     return this.transactionService.addTransaction(body)
   }
 
-  @Put('update')
+  @Put('update/amount')
   @ApiOperation({ summary: 'Update amount in record' })
   @ApiBody({
     type: UpdateAmountDto,
   })
   async updateRecordAmount(@Body() body: UpdateAmountDto) {
     return this.transactionService.updateRecordAmount(body)
+  }
+
+  @Put('update/currency')
+  @ApiOperation({ summary: 'Update transaction currency' })
+  @ApiBody({
+    type: UpdateCurrencyDto,
+  })
+  async updateTransactionCurrency(@Body() body: UpdateCurrencyDto) {
+    return this.transactionService.updateTransactionCurrency(body)
   }
 }

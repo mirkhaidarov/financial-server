@@ -11,6 +11,7 @@ import { ExceptionService } from '@core/modules/exception'
 import { FinancialRecord, Transaction } from '../core/entity'
 import { AddTransactionDto, UpdateAmountDto } from '../core/dto'
 import { TransactionExceptionMessages } from '../core/exception-messages'
+import { UpdateCurrencyDto } from '../core/dto/update-currency.dto'
 
 @Injectable()
 export class TransactionService {
@@ -126,6 +127,34 @@ export class TransactionService {
       })
 
       return this.exceptionService.success({ message: TransactionExceptionMessages.UPDATE_RECORD_AMOUNT_SUCCESS })
+    } catch (error: unknown) {
+      return this.exceptionService.internalServerError(error)
+    }
+  }
+
+  async updateTransactionCurrency({ currency, transactionType, transactionName }: UpdateCurrencyDto) {
+    try {
+      const isCurrencyExist = await this.exchangeRateService.checkIsCurrencyExist(currency)
+
+      if (!isCurrencyExist) {
+        return this.exceptionService.notFound({
+          message: TransactionExceptionMessages.CURRENCY_NOT_FOUND,
+        })
+      }
+
+      const transaction = await this.transactionRepository.findOneByOrFail({
+        name: transactionName,
+        type: transactionType,
+      })
+
+      await this.transactionRepository.update(transaction.id, {
+        currency,
+        updatedAt: getUTCDate(),
+      })
+
+      return this.exceptionService.success({
+        message: TransactionExceptionMessages.UPDATE_TRANSACTION_CURRENCY_SUCCESS,
+      })
     } catch (error: unknown) {
       return this.exceptionService.internalServerError(error)
     }
