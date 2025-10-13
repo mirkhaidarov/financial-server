@@ -97,7 +97,7 @@ export class TransactionService {
       })
 
       const convertedAmount = await this.exchangeRateService.getConvertedAmount({
-        from: currency || user.currency,
+        from: currency || transaction.currency || user.currency,
         amount,
       })
 
